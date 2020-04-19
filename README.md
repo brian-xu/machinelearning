@@ -4,6 +4,7 @@ Machine learning models implemented in pure NumPy. Model architecture was derive
 [Stanford Machine Learning](https://www.coursera.org/learn/machine-learning/home/welcome)
 lectures and course slides.
 
-Code is purely educational in purpose. I wouldn't
+Code is purely educational in purpose.
+
 #Dataset Credits
 Linear Regression: [Kaggle.com](https://www.kaggle.com/andonians/random-linear-regression)
