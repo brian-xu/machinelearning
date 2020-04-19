@@ -6,5 +6,5 @@ lectures and course slides.
 
 Code is purely educational in purpose.
 
-#Dataset Credits
+# Dataset Credits
 Linear Regression: [Kaggle.com](https://www.kaggle.com/andonians/random-linear-regression)
