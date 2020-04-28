@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 import scipy.optimize as opt
@@ -26,7 +27,8 @@ def predict(theta: np.array, layer_sizes: np.array, X: np.array) -> np.array:
     return np.argmax(X, axis=1)
 
 
-def cost(theta: np.array, layer_sizes: np.array, labels: int, X: np.array, y: np.array, reg: float = 0) -> (float, np.array):
+def cost(theta: np.array, layer_sizes: np.array, labels: int,
+         X: np.array, y: np.array, reg: float = 0) -> (float, np.array):
     """
     theta: unrolled array containing all layers
     layer_sizes: array indicating the size of layers
@@ -43,7 +45,7 @@ def cost(theta: np.array, layer_sizes: np.array, labels: int, X: np.array, y: np
     y_i = np.zeros((m, labels + 1))
 
     for ex in range(m):
-        y_i[ex, :] = (np.arange(labels+1) == y[ex])
+        y_i[ex, :] = (np.arange(labels + 1) == y[ex])
 
     for layer in layer_sizes:
         layer_size = layer[0] * layer[1]
@@ -95,3 +97,29 @@ theta = np.hstack((theta1.flatten(), theta2.flatten()))
 theta = opt.fmin_tnc(func=cost, x0=theta, args=(layer_sizes, 9, X, y, 3))[0]
 
 print(np.sum(predict(theta, layer_sizes, test[:, :-1]) == test[:, -1]) / len(test))
+
+for i in range(4):
+    for j in range(4):
+        if j == 0:
+            digit = test[i * 4 + j, :-1].reshape(8, 8)
+        else:
+            digit = np.hstack((digit, test[i * 4 + j, :-1].reshape(8, 8)))
+        x = test[i * 4 + j, :-1].reshape(1, 64)
+        plt.text(j * 8, 1 + i * 8, predict(theta, layer_sizes, x)[0], color='white', fontsize=16)
+    if i == 0:
+        digits = digit
+    else:
+        digits = np.vstack((digits, digit))
+
+plt.imshow(digits, cmap='gray')
+frame1 = plt.gca()
+frame1.axes.get_xaxis().set_ticks([-0.5, 7.5, 15.5, 23.5, 31.5])
+frame1.axes.get_yaxis().set_ticks([-0.5, 7.5, 15.5, 23.5, 31.5])
+for tic in frame1.xaxis.get_major_ticks():
+    tic.tick1line.set_visible(False)
+    tic.label1.set_visible(False)
+for tic in frame1.yaxis.get_major_ticks():
+    tic.tick1line.set_visible(False)
+    tic.label1.set_visible(False)
+plt.grid(color='r', linestyle='-', linewidth=2)
+plt.show()

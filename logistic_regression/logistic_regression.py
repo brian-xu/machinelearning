@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 import scipy.optimize as opt
@@ -27,15 +28,8 @@ def cost(theta: np.array, X: np.array, y: np.array, reg: float = 0) -> (float,):
     return J, grad + grad_reg
 
 
-def regularize(X: np.array, start: int) -> (np.array,):
-    m, n = X.shape
-    mean = np.zeros((m, 1))
-    std = np.ones((m, 1))
-    for col in range(start, n):
-        mean[col] = np.mean(X[:, col])
-        std[col] = np.std(X[:, col])
-        X[:, col] = (X[:, col] - mean[col]) / std[col]
-    return X, mean, std
+def decision_boundary(X: np.array, theta: np.array) -> np.array:
+    return -(theta[0] + theta[1] * X) / theta[2]
 
 
 with open("train.csv") as f:
@@ -47,12 +41,11 @@ with open("train.csv") as f:
 m, n = train.shape
 
 X = np.hstack((np.ones((m, 1)), train[:, 0:n - 1]))
-# X, mean, std = regularize(X, 1)
 y = train[:, n - 1].reshape((m, 1))
 
 theta = np.zeros((X.shape[1], 1))
 
-theta = opt.fmin_tnc(func=cost, x0=theta, args=(X, y, 10))[0]
+theta = opt.fmin_tnc(func=cost, x0=theta, args=(X, y))[0]
 
 print(theta)
 
@@ -65,5 +58,17 @@ for t in test:
     if np.round(predicted) == actual:
         correct += 1
     total += 1
+
+x = np.arange(int(min(test[:, 0])), 100)
+accepted = np.array([p for p in test if p[2] == 1])
+rejected = np.array([p for p in test if p[2] == 0])
+plt.scatter(accepted[:, 0], accepted[:, 1], c='blue')
+plt.scatter(rejected[:, 0], rejected[:, 1], c='red')
+plt.legend(['Accepted', 'Rejected'])
+plt.plot(x, decision_boundary(x, theta), 'black')
+plt.xlabel('Test 1 Score')
+plt.ylabel('Test 2 Score')
+plt.title('Accepted to College')
+plt.show()
 
 print("Test set accuracy:", correct * 100 / total)
