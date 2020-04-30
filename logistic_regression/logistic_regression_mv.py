@@ -1,23 +1,31 @@
-import matplotlib;
+# import matplotlib; matplotlib.use("TkAgg")  # Uncomment to display animation on PyCharm
+import itertools
 
-matplotlib.use("TkAgg")  # Uncomment to display animation on PyCharm
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 from scipy.spatial import ConvexHull
-import itertools
 
 global theta_iter
 theta_iter = []
 
 
 def sigmoid(x: np.array) -> np.array:
+    """
+    Returns the sigmoid transformation of each value in an array.
+    x: m x n array
+    """
     return 1 / (1 + np.exp(-x))
 
 
 def map_features(x: np.array, n_features: int):
+    """
+    Create polynomial features using exponential combinations of input features.
+    x: m x n array
+    n_features: scalar determining the highest power each feature should be raised to.
+    """
     m, n = x.shape
     poly_x = np.ones((m, 1))
     feature_map = [range(1, n_features + 1)] * n
@@ -62,7 +70,9 @@ with open("train_mv.csv") as f:
 x = train[:, 0:-1]
 features = 6
 x = map_features(x, features)
+
 m, n = x.shape
+
 y = train[:, -1].reshape((m, 1))
 
 theta = np.zeros((1, n))
@@ -71,16 +81,23 @@ theta = opt.fmin_tnc(func=cost, x0=theta, args=(x, y))[0]
 fig, ax = plt.subplots()
 
 
-def decision_boundary(graph_boundaries: np.array, theta: np.array, features: int) -> np.array:
+def decision_boundary(graph_boundaries: np.array, theta: np.array, n_features: int, max_bound: float = 0.3) -> np.array:
+    """
+    Find the decision boundary for multivariate logistic regression.
+    graph_boundaries: array determining the smoothness of the boundary.
+    theta: n x 1 array
+    n_features: scalar determining the highest power each feature should be raised to.
+    max_bound: scalar determining the largest loss that is included in the boundary.
+    """
     z = []
     for i in graph_boundaries:
         for j in graph_boundaries:
-            if 0 <= map_features(np.array([[i, j]]), features) @ theta.T <= 0.3:
+            if 0 <= map_features(np.array([[i, j]]), n_features) @ theta.T <= max_bound:
                 z.append(np.array([i, j]))
     return np.array(z)
 
 
-graph_boundaries = np.linspace(np.amin(test[:, 0:2]), np.amax(test[:, 0:2]), 100)
+graph_boundaries = np.linspace(np.amin(test[:, 0:2]), np.amax(test[:, 0:2]), 50)
 accepted = np.array([p for p in test if p[2] == 1])
 rejected = np.array([p for p in test if p[2] == 0])
 
@@ -90,7 +107,7 @@ def animate(i):
     ax.clear()
     ax.scatter(accepted[:, 0], accepted[:, 1], c='dodgerblue')
     ax.scatter(rejected[:, 0], rejected[:, 1], c='firebrick')
-    ax.legend(['Accepted', 'Rejected'], loc = 1)
+    ax.legend(['Accepted', 'Rejected'], loc=1)
     p_x = decision_boundary(graph_boundaries, theta_iter[i], features)
     if len(p_x) > 2:
         hull = ConvexHull(p_x)
@@ -101,7 +118,7 @@ def animate(i):
     ax.set_title('Microchip Validation')
 
 
-ani = animation.FuncAnimation(fig, animate, frames=137, interval=75, repeat=False)
+ani = animation.FuncAnimation(fig, animate, frames=len(theta_iter), interval=75, repeat=False)
 animate(-1)
 plt.show()
 

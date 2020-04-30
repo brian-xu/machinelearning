@@ -10,6 +10,10 @@ theta_iter = []
 
 
 def sigmoid(x: np.array) -> np.array:
+    """
+    Returns the sigmoid transformation of each value in an array.
+    x: m x n array
+    """
     return 1 / (1 + np.exp(-x))
 
 

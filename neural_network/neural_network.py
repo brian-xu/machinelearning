@@ -27,25 +27,26 @@ def predict(theta: np.array, layer_sizes: np.array, X: np.array) -> np.array:
     return np.argmax(X, axis=1)
 
 
-def cost(theta: np.array, layer_sizes: np.array, labels: int,
-         X: np.array, y: np.array, reg: float = 0) -> (float, np.array):
+def cost(theta: np.array, layer_sizes: np.array, labels_end: int,
+         X: np.array, y: np.array, reg: float = 0, labels_start: int = 0) -> (float, np.array):
     """
     theta: unrolled array containing all layers
     layer_sizes: array indicating the size of layers
-    labels: integer indicating the number of labels in y
+    labels_end: integer indicating the largest label in y
     X: m x n input layer
     y: m x 1 output with values ranging from 0-labels
     reg: regularization parameter
+    labels_start: optional argument indicating the smallest label in y
     """
     m, n = X.shape
     layers = []
     a = []
     z = []
     grads = []
-    y_i = np.zeros((m, labels + 1))
+    y_i = np.zeros((m, labels_end - labels_start + 1))
 
     for ex in range(m):
-        y_i[ex, :] = (np.arange(labels + 1) == y[ex])
+        y_i[ex, :] = (np.arange(labels_start, labels_end + 1) == y[ex])
 
     for layer in layer_sizes:
         layer_size = layer[0] * layer[1]
@@ -59,7 +60,8 @@ def cost(theta: np.array, layer_sizes: np.array, labels: int,
 
     pos = y_i * np.log(X)
     neg = (1 - y_i) * np.log(1 - X)
-    J = np.sum(np.sum(-pos - neg)) / m
+    log_error = -pos - neg
+    J = np.sum(np.sum(log_error)) / m
 
     for layer in layers:
         J += np.sum((layer[:, 1:] ** 2)) * (reg / (2 * m))
@@ -78,7 +80,7 @@ def cost(theta: np.array, layer_sizes: np.array, labels: int,
     return J, grad
 
 
-with open('optdigits.txt') as f:
+with open('optdigits.csv') as f:
     data = pandas.read_csv(f, header=None)
     data = data.to_numpy()
     np.random.shuffle(data)
