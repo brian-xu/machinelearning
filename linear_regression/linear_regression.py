@@ -66,7 +66,7 @@ def regularize(x: np.array) -> (np.array,):
 
 params = [3, -1]
 
-with open("train.csv") as f:
+with open("retail.csv") as f:
     data = pd.read_csv(f)
     data = data.to_numpy()
     data = data[:, params]
