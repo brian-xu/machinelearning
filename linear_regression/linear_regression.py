@@ -55,51 +55,58 @@ def regularize(x: np.array) -> (np.array,):
     x: m x n vector
     """
     m, n = x.shape
-    mean = np.zeros((m, 1))
-    std = np.ones((m, 1))
+    mean = np.zeros((1, n))
+    std = np.ones((1, n))
     for col in range(1, n):
-        mean[col] = np.mean(x[:, col])
-        std[col] = np.std(x[:, col])
-        x[:, col] = (x[:, col] - mean[col]) / std[col]
+        mean[0, col] = np.mean(x[:, col])
+        std[0, col] = np.std(x[:, col])
+        x[:, col] = (x[:, col] - mean[0, col]) / std[0, col]
     return x, mean, std
 
 
+params = [3, -1]
+
 with open("train.csv") as f:
-    train = pd.read_csv(f)
-    train = train.to_numpy()
-with open("test.csv") as f:
-    test = pd.read_csv(f)
-    test = test.to_numpy()
+    data = pd.read_csv(f)
+    data = data.to_numpy()
+    data = data[:, params]
+    np.random.shuffle(data)
+    test_len = int(np.round(len(data)*3/10))
+    train = data[:-test_len]
+    test = data[-test_len:]
 
 m, n = train.shape
 
 x = np.hstack((np.ones((m, 1)), train[:, 0:n - 1]))
 y = train[:, n - 1].reshape((m, 1))
 
-mean = np.zeros((m, 1))
-std = np.ones((m, 1))
+mean = np.zeros((1, n))
+std = np.ones((1, n))
 x, mean, std = regularize(x)
 
 theta = np.zeros((1, n))
 theta, J_iter, theta_iter = gradient_descent(theta, x, y, 0.01, 1500)
+theta = theta.reshape((1, n))
+
+test_x = np.hstack((np.ones((test_len, 1)), test[:, 0:n - 1]))
+test_y = test[:, n - 1].reshape((test_len, 1))
+
+residual = np.sum((test_y - (((test_x - mean) / std) @ theta.T)) ** 2)
+total = np.sum((test_y - np.mean(test_y)) ** 2)
+
+print(f"R-squared for test set: {1 - (residual / total)}")
 
 # Below code is not vectorized but it's just visualization code
-total = 0
-predicted = 0
-for t in test:
-    predicted += t[1] ** 2
-    total += (theta[1] * (t[0] - mean[1]) / std[1] + theta[0]) ** 2
-
-print("Test set accuracy:", total * 100 / predicted)
 
 fig, ax = plt.subplots()
 
-x_vals = np.linspace(0, 100)
+x_vals = np.linspace(0, int(np.max(test_x[:, -1:]))).reshape((50, 1))
 
 
 def animate(i):
-    p_x = theta_iter[i][1] * (x_vals - mean[1]) / std[1] + theta_iter[i][0]
+    p_x = (theta_iter[i] @ ((np.hstack((np.ones((50, 1)), x_vals)) - mean) / std).T)
     ax.clear()
+    ax.set(ylim=(0, np.ceil(np.max(test[:, 1]) / 10) * 10))
     ax.scatter(test[:, 0], test[:, 1]),
     regression_line, = ax.plot(x_vals, p_x, 'black', linewidth=1)
     regression_line.set_label(f'Cost: {J_iter[i]}')
