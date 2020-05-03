@@ -24,12 +24,14 @@ def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, n
     x: m x n vector
     y: m x 1 vector
     J: scalar
-    grad: n x 1 vector
+    grad: 1 x n vector
     """
     global theta_iter
     m, n = x.shape
+
     theta = theta.reshape((1, n))
     theta_iter.append(theta)
+
     h_x = sigmoid(x @ theta.T)
     pos = y * np.log(h_x)
     neg = (1 - y) * np.log(1 - h_x)
@@ -57,7 +59,19 @@ y = train[:, n - 1].reshape((m, 1))
 theta = np.zeros((1, n))
 theta = opt.fmin_tnc(func=cost, x0=theta, args=(x, y))[0]
 
-print(theta)
+theta_iter.append(theta.reshape((1, n)))
+
+total = 0
+correct = 0
+
+for t in test:
+    actual = t[-1]
+    predicted = sigmoid(np.append([1], t[0:-1]) @ theta)
+    if np.round(predicted) == actual:
+        correct += 1
+    total += 1
+
+print("Test set accuracy:", correct * 100 / total)
 
 fig, ax = plt.subplots()
 
@@ -90,15 +104,3 @@ def animate(i):
 ani = animation.FuncAnimation(fig, animate, frames=len(theta_iter), interval=40, repeat=False)
 animate(-1)
 plt.show()
-
-total = 0
-correct = 0
-
-for t in test:
-    actual = t[-1]
-    predicted = sigmoid(np.append([1], t[0:-1]) @ theta)
-    if np.round(predicted) == actual:
-        correct += 1
-    total += 1
-
-print("Test set accuracy:", correct * 100 / total)

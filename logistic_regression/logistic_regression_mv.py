@@ -20,21 +20,6 @@ def sigmoid(x: np.array) -> np.array:
     return 1 / (1 + np.exp(-x))
 
 
-def map_features(x: np.array, n_features: int):
-    """
-    Create polynomial features using exponential combinations of input features.
-    x: m x n array
-    n_features: scalar determining the highest power each feature should be raised to.
-    """
-    m, n = x.shape
-    poly_x = np.ones((m, 1))
-    feature_map = [range(1, n_features + 1)] * n
-    poly_features = tuple(itertools.product(*feature_map))
-    for feature in poly_features:
-        poly_x = np.hstack((poly_x, np.power(x, feature)))
-    return poly_x
-
-
 def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, np.array):
     """
     Determine the cost and gradient for the current theta using sigmoid loss.
@@ -42,12 +27,14 @@ def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, n
     x: m x n vector
     y: m x 1 vector
     J: scalar
-    grad: n x 1 vector
+    grad: 1 x n vector
     """
     global theta_iter
     m, n = x.shape
+
     theta = theta.reshape((1, n))
     theta_iter.append(theta)
+
     h_x = sigmoid(x @ theta.T)
     pos = y * np.log(h_x)
     neg = (1 - y) * np.log(1 - h_x)
@@ -60,6 +47,19 @@ def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, n
     grad_reg = np.append([0], theta[0, 1:] * (reg / m)).reshape(grad.shape)
 
     return J, grad + grad_reg
+
+
+def map_features(x: np.array, n_features: int):
+    """
+    Create polynomial features using exponential combinations of input features.
+    x: m x n array
+    n_features: scalar determining the highest power each feature should be raised to.
+    """
+    m, n = x.shape
+    feature_map = [range(0, n_features + 1)] * n
+    poly_features = tuple(itertools.product(*feature_map))
+    poly_x = np.hstack([np.power(x, feature) for feature in poly_features])
+    return poly_x
 
 
 with open("train_mv.csv") as f:
@@ -77,6 +77,20 @@ y = train[:, -1].reshape((m, 1))
 
 theta = np.zeros((1, n))
 theta = opt.fmin_tnc(func=cost, x0=theta, args=(x, y))[0]
+
+theta_iter.append(theta.reshape((1, n)))
+
+total = 0
+correct = 0
+
+for index, t in enumerate(x):
+    actual = y[index][-1]
+    predicted = sigmoid(t @ theta)
+    if np.round(predicted) == actual:
+        correct += 1
+    total += 1
+
+print("Test set accuracy:", correct * 100 / total)
 
 fig, ax = plt.subplots()
 
@@ -121,15 +135,3 @@ def animate(i):
 ani = animation.FuncAnimation(fig, animate, frames=len(theta_iter), interval=75, repeat=False)
 animate(-1)
 plt.show()
-
-total = 0
-correct = 0
-
-for index, t in enumerate(x):
-    actual = y[index][-1]
-    predicted = sigmoid(t @ theta)
-    if np.round(predicted) == actual:
-        correct += 1
-    total += 1
-
-print("Test set accuracy:", correct * 100 / total)

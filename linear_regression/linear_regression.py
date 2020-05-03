@@ -8,19 +8,19 @@ import pandas as pd
 def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, np.array):
     """
     Determine cost with the current theta using squared-difference loss.
-    theta: n x 1 vector
+    theta: 1 x n vector
     x: m x n vector
     y: m x 1 vector
     J: scalar
-    grad: n x 1 vector
+    grad: 1 x n vector
     """
     m, n = x.shape
     h_x = x @ theta.T
     diff = y - h_x
 
     squared_diff = np.power(diff, 2)
-    cost_reg = theta[1:] ** 2
-    J = np.sum(squared_diff / (2 * m)) + reg * np.sum(cost_reg)
+    J_reg = theta[1:] ** 2
+    J = np.sum(squared_diff / (2 * m)) + reg * np.sum(J_reg)
 
     grad = (h_x - y).T @ x / m
 
@@ -43,8 +43,7 @@ def gradient_descent(theta: np.array, x: np.array, y: np.array, alpha: int, iter
     for i in range(0, iters):
         J_iter[i], grad = cost(theta, x, y)
         theta_iter[i, :] = theta
-        reg_adj = np.array([1] + [1 - (alpha * reg) / m for _ in range(n - 1)])
-        reg_adj = reg_adj.reshape(theta.shape)
+        reg_adj = np.array([[1] + [1 - (alpha * reg) / m for _ in range(n - 1)]])
         theta = (theta * reg_adj) - grad * alpha
     return theta[0], J_iter, theta_iter
 
@@ -71,7 +70,7 @@ with open("retail.csv") as f:
     data = data.to_numpy()
     data = data[:, params]
     np.random.shuffle(data)
-    test_len = int(np.round(len(data)*3/10))
+    test_len = int(np.round(len(data) * 3 / 10))
     train = data[:-test_len]
     test = data[-test_len:]
 
@@ -102,15 +101,19 @@ fig, ax = plt.subplots()
 
 x_vals = np.linspace(0, int(np.max(test_x[:, -1:]))).reshape((50, 1))
 
+ax.set(ylim=(0, np.ceil(np.max(test[:, 1]) / 10) * 10))
+
 
 def animate(i):
-    p_x = (theta_iter[i] @ ((np.hstack((np.ones((50, 1)), x_vals)) - mean) / std).T)
     ax.clear()
-    ax.set(ylim=(0, np.ceil(np.max(test[:, 1]) / 10) * 10))
-    ax.scatter(test[:, 0], test[:, 1]),
+    ax.scatter(test[:, 0], test[:, 1])
+    p_x = (theta_iter[i] @ ((np.hstack((np.ones((50, 1)), x_vals)) - mean) / std).T)
     regression_line, = ax.plot(x_vals, p_x, 'black', linewidth=1)
     regression_line.set_label(f'Cost: {J_iter[i]}')
     ax.legend()
+    ax.set_xlabel('Exam 1 Score')
+    ax.set_ylabel('Exam 2 Score')
+    ax.set_title('House price per unit area')
 
 
 ani = animation.FuncAnimation(fig, animate, frames=len(theta_iter), interval=1, repeat=False)
