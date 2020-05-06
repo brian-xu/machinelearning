@@ -22,6 +22,7 @@ def sigmoid_gradient(x: np.array) -> np.array:
 
 def reshape_theta(theta: np.array, layer_sizes: np.array) -> [np.array, ]:
     """
+    Reforms individual layers as defined by layer sizes.
     theta: unrolled array containing all layers
     layer_sizes: array indicating the size of layers
     """
@@ -123,7 +124,7 @@ def cost(theta: np.array, layer_sizes: np.array, labels_end: int,
 def initialize_weights(shape: (int, int)) -> np.array:
     """
     Initialize weight layers with a random non-zero value to prevent convergence from stalling.
-    shape: 1 x 2
+    shape: 1 x 2 array
     """
     m, n = shape
     return np.random.randn(m, n) * np.sqrt(2 / (m - 1))
@@ -151,6 +152,8 @@ theta = opt.fmin_tnc(func=cost, x0=theta, args=(layer_sizes, 9, x, y, 3))[0]
 p_x = predict(theta, layer_sizes, test[:, :-1])
 
 print("Test set accuracy:", np.sum(p_x == test[:, -1]) / len(test))
+
+# Below code is not vectorized but it's just visualization code
 
 fig, ax = plt.subplots()
 
