@@ -92,6 +92,8 @@ for index, t in enumerate(x):
 
 print("Test set accuracy:", correct * 100 / total)
 
+# Below code is not vectorized but it's just visualization code
+
 fig, ax = plt.subplots()
 
 

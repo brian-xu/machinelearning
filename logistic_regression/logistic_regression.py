@@ -9,6 +9,15 @@ global theta_iter
 theta_iter = []
 
 
+def add_ones(x: np.array) -> np.array:
+    """
+    Adds a column of ones to the given 2D array.
+    x: m x n array.
+    """
+    m, n = x.shape
+    return np.hstack((np.ones((m, 1)), x))
+
+
 def sigmoid(x: np.array) -> np.array:
     """
     Returns the sigmoid transformation of each value in an array.
@@ -46,6 +55,17 @@ def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, n
     return J, grad + grad_reg
 
 
+def predict(theta: np.array, x: np.array) -> np.array:
+    """
+    Predict the output at the given x and theta.
+    x: m x n array
+    theta: 1 x n array
+    """
+    m, n = x.shape
+    theta = theta.reshape((1, n))
+    return np.round(sigmoid(x @ theta.T))
+
+
 with open("train.csv") as f:
     train = pd.read_csv(f)
     train = train.to_numpy()
@@ -53,7 +73,7 @@ with open("train.csv") as f:
 
 m, n = train.shape
 
-x = np.hstack((np.ones((m, 1)), train[:, 0:n - 1]))
+x = add_ones(train[:, 0:n - 1])
 y = train[:, n - 1].reshape((m, 1))
 
 theta = np.zeros((1, n))
@@ -61,22 +81,24 @@ theta = opt.fmin_tnc(func=cost, x0=theta, args=(x, y))[0]
 
 theta_iter.append(theta.reshape((1, n)))
 
-total = 0
-correct = 0
+test_x = add_ones(test[:, :-1])
+test_y = test[:, -1:]
 
-for t in test:
-    actual = t[-1]
-    predicted = sigmoid(np.append([1], t[0:-1]) @ theta)
-    if np.round(predicted) == actual:
-        correct += 1
-    total += 1
+p_x = predict(theta, test_x)
 
-print("Test set accuracy:", correct * 100 / total)
+print("Test set accuracy:", np.sum(p_x == test_y) / len(test))
+
+# Below code is not vectorized but it's just visualization code
 
 fig, ax = plt.subplots()
 
 
 def decision_boundary(x: np.array, theta: np.array) -> np.array:
+    """
+    Calculates the decision boundary line for a two-variable linear regression.
+    x: m x 3 array
+    theta: 1 x 3 array
+    """
     theta = theta[0]
     if theta[2] == 0:
         return x * 0
@@ -93,9 +115,9 @@ def animate(i):
     ax.clear()
     ax.scatter(accepted[:, 0], accepted[:, 1], c='blue')
     ax.scatter(rejected[:, 0], rejected[:, 1], c='red')
-    ax.legend(['Accepted', 'Rejected'])
     p_x = decision_boundary(reg_x, theta_iter[i])
     ax.plot(reg_x, p_x, 'black')
+    ax.legend([f'Cost: {cost(theta_iter[i], x, y)[0]}', 'Accepted', 'Rejected'], loc=3)
     ax.set_xlabel('Exam 1 Score')
     ax.set_ylabel('Exam 2 Score')
     ax.set_title('Accepted to College')
