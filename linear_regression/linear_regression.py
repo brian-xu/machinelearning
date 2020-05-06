@@ -5,6 +5,15 @@ import numpy as np
 import pandas as pd
 
 
+def add_ones(x: np.array) -> np.array:
+    """
+    Adds a column of ones to the given 2D array.
+    x: m x n array.
+    """
+    m, n = x.shape
+    return np.hstack((np.ones((m, 1)), x))
+
+
 def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, np.array):
     """
     Determine cost with the current theta using squared-difference loss.
@@ -63,10 +72,22 @@ def regularize(x: np.array) -> (np.array,):
     return x, mean, std
 
 
+def predict(theta: np.array, x: np.array) -> np.array:
+    """
+    Predict the output at the given x and theta.
+    x: m x n array
+    theta: 1 x n array
+    """
+    m, n = x.shape
+    theta = theta.reshape((1, n))
+    return x @ theta.T
+
+
 params = [3, -1]
 
 with open("retail.csv") as f:
     data = pd.read_csv(f)
+    headers = data.columns
     data = data.to_numpy()
     data = data[:, params]
     np.random.shuffle(data)
@@ -76,7 +97,7 @@ with open("retail.csv") as f:
 
 m, n = train.shape
 
-x = np.hstack((np.ones((m, 1)), train[:, 0:n - 1]))
+x = add_ones(train[:, 0:n - 1])
 y = train[:, n - 1].reshape((m, 1))
 
 mean = np.zeros((1, n))
@@ -87,10 +108,10 @@ theta = np.zeros((1, n))
 theta, J_iter, theta_iter = gradient_descent(theta, x, y, 0.01, 1500)
 theta = theta.reshape((1, n))
 
-test_x = np.hstack((np.ones((test_len, 1)), test[:, 0:n - 1]))
+test_x = add_ones(test[:, 0:n - 1])
 test_y = test[:, n - 1].reshape((test_len, 1))
 
-residual = np.sum((test_y - (((test_x - mean) / std) @ theta.T)) ** 2)
+residual = np.sum((test_y - predict(theta, (test_x - mean) / std)) ** 2)
 total = np.sum((test_y - np.mean(test_y)) ** 2)
 
 print(f"R-squared for test set: {1 - (residual / total)}")
@@ -103,17 +124,20 @@ x_vals = np.linspace(0, int(np.max(test_x[:, -1:]))).reshape((50, 1))
 
 ax.set(ylim=(0, np.ceil(np.max(test[:, 1]) / 10) * 10))
 
+independent = headers[params[0]]
+dependent = headers[params[1]]
+
 
 def animate(i):
     ax.clear()
     ax.scatter(test[:, 0], test[:, 1])
-    p_x = (theta_iter[i] @ ((np.hstack((np.ones((50, 1)), x_vals)) - mean) / std).T)
-    regression_line, = ax.plot(x_vals, p_x, 'black', linewidth=1)
+    p_x = predict(theta_iter[i], (add_ones(x_vals) - mean) / std)
+    regression_line, = ax.plot(x_vals, p_x, 'black')
     regression_line.set_label(f'Cost: {J_iter[i]}')
     ax.legend()
-    ax.set_xlabel('Exam 1 Score')
-    ax.set_ylabel('Exam 2 Score')
-    ax.set_title('House price per unit area')
+    ax.set_xlabel(independent)
+    ax.set_ylabel(dependent)
+    ax.set_title(f'{dependent} vs {independent}')
 
 
 ani = animation.FuncAnimation(fig, animate, frames=len(theta_iter), interval=1, repeat=False)
