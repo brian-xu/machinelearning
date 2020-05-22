@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas
-import scipy.optimize as opt
+import pandas as pd
 
 
 def sigmoid(x: np.array) -> np.array:
@@ -131,7 +130,7 @@ def initialize_weights(shape: (int, int)) -> np.array:
 
 
 with open('optdigits.csv') as f:
-    data = pandas.read_csv(f, header=None)
+    data = pd.read_csv(f, header=None)
     data = data.to_numpy()
     np.random.shuffle(data)
     test_len = int(np.round(len(data) * 3 / 10))
@@ -155,23 +154,14 @@ print("Test set accuracy:", np.sum(p_x == test[:, -1]) / len(test))
 
 # Below code is not vectorized but it's just visualization code
 
-fig, ax = plt.subplots()
-
-digits = np.vstack([np.hstack([test[i * 4 + j, :-1].reshape(8, 8) for j in range(4)]) for i in range(4)])
+fig, ax = plt.subplots(4, 4)
 
 for i in range(4):
     for j in range(4):
-        digit_x = test[i * 4 + j, :-1].reshape(1, 64)
-        plt.text(j * 8, 1 + i * 8, predict(theta, layer_sizes, digit_x)[0], color='white', fontsize=16)
+        digit = test[i * 4 + j, :-1].reshape(8, 8)
+        digit_x = digit.reshape(1, 64)
+        ax[i, j].imshow(digit, cmap='gray')
+        ax[i, j].set_title(f'Predicted: {predict(theta, layer_sizes, digit_x)[0]} ({test[i * 4 + j, -1]})')
+        ax[i, j].axis('off')
 
-ax.imshow(digits, cmap='gray')
-ax.get_xaxis().set_ticks([-0.5, 7.5, 15.5, 23.5, 31.5])
-ax.get_yaxis().set_ticks([-0.5, 7.5, 15.5, 23.5, 31.5])
-for tic in ax.get_xaxis().get_major_ticks():
-    tic.tick1line.set_visible(False)
-    tic.label1.set_visible(False)
-for tic in ax.get_yaxis().get_major_ticks():
-    tic.tick1line.set_visible(False)
-    tic.label1.set_visible(False)
-ax.grid(color='r', linestyle='-', linewidth=2)
 fig.show()
