@@ -1,11 +1,12 @@
 # import matplotlib; matplotlib.use("TkAgg")  # Uncomment to display animation on PyCharm
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
-from matplotlib import style
 import numpy as np
 import pandas as pd
+from matplotlib import style
 
 style.use('ggplot')
+
 
 def add_ones(x: np.array) -> np.array:
     """
@@ -85,14 +86,15 @@ def predict(theta: np.array, x: np.array) -> np.array:
     return x @ theta.T
 
 
-params = [3, -1]
+params = [5, 3]
 
-with open("retail.csv") as f:
+with open("weatherHistory.csv") as f:
     data = pd.read_csv(f)
     headers = data.columns
     data = data.to_numpy()
     data = data[:, params]
     np.random.shuffle(data)
+    data = data[int(np.round(len(data) * 95 / 100)):, :]
     test_len = int(np.round(len(data) * 3 / 10))
     train = data[:-test_len]
     test = data[-test_len:]

@@ -7,7 +7,7 @@ lectures and course slides.
 Code is purely educational in purpose.
 
 # Dataset Credits
-Linear Regression: [Kaggle.com](https://www.kaggle.com/quantbruce/real-estate-price-prediction)
+Linear Regression: [Kaggle.com](https://www.kaggle.com/budincsevity/szeged-weather)
 
 Logistic Regression: [Coursera.com](https://www.coursera.org/learn/machine-learning/programming/ixFof/logistic-regression)
 
