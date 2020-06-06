@@ -1,9 +1,12 @@
 # import matplotlib; matplotlib.use("TkAgg")  # Uncomment to display animation on PyCharm
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+from matplotlib import style
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
+
+style.use('ggplot')
 
 global theta_iter
 theta_iter = []

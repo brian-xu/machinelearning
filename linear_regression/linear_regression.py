@@ -1,9 +1,11 @@
 # import matplotlib; matplotlib.use("TkAgg")  # Uncomment to display animation on PyCharm
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+from matplotlib import style
 import numpy as np
 import pandas as pd
 
+style.use('ggplot')
 
 def add_ones(x: np.array) -> np.array:
     """
@@ -117,6 +119,8 @@ total = np.sum((test_y - np.mean(test_y)) ** 2)
 print(f"R-squared for test set: {1 - (residual / total)}")
 
 # Below code is not vectorized but it's just visualization code
+
+plt.rcParams["axes.titlesize"] = 13
 
 fig, ax = plt.subplots()
 
