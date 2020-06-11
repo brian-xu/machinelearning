@@ -3,6 +3,10 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 
+from import_datasets import download_digits
+
+download_digits()
+
 
 def sigmoid(x: np.array) -> np.array:
     """
@@ -130,13 +134,15 @@ def initialize_weights(shape: (int, int)) -> np.array:
     return np.random.randn(m, n) * np.sqrt(2 / (m - 1))
 
 
-with open('optdigits.csv') as f:
+with open('optdigits.tra') as f:
     data = pd.read_csv(f, header=None)
-    data = data.to_numpy()
-    np.random.shuffle(data)
-    test_len = int(np.round(len(data) * 3 / 10))
-    train = data[:-test_len]
-    test = data[-test_len:]
+    train = data.to_numpy()
+    np.random.shuffle(train)
+
+with open('optdigits.tes') as f:
+    data = pd.read_csv(f, header=None)
+    test = data.to_numpy()
+    np.random.shuffle(test)
 
 x = train[:, :-1]
 y = train[:, -1]
