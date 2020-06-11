@@ -7,8 +7,10 @@ lectures and course slides.
 Code is purely educational in purpose.
 
 # Dataset Credits
-Linear Regression: [Kaggle.com](https://www.kaggle.com/budincsevity/szeged-weather)
+Linear Regression: [UCI ML Repository](http://archive.ics.uci.edu/ml/datasets/Auto+MPG)
 
-Logistic Regression: [Coursera.com](https://www.coursera.org/learn/machine-learning/programming/ixFof/logistic-regression)
+Logistic Regression: [UCI ML Repository](https://archive.ics.uci.edu/ml/datasets/Student+Performance)
+
+Logistic Regression (Multivariate): [UCI ML Repository](https://archive.ics.uci.edu/ml/datasets/Wine)
 
 Neural Network: [UCI ML Repository](http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits)
