@@ -3,13 +3,28 @@ import itertools
 
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
-from matplotlib import style
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
-from scipy.spatial import ConvexHull
+import seaborn as sns
+from scipy.spatial.qhull import ConvexHull
 
-style.use('ggplot')
+from import_datasets import download_wine
+
+sns.set()
+
+download_wine()
+
+with open("wine.data") as f:
+    wine = pd.read_csv(f)
+    headers = wine.columns
+
+wine['Alcohol'] = (wine['Alcohol'] == 1).astype(int)
+
+data = wine.to_numpy()
+
+sns.pairplot(wine, hue='Alcohol')
+plt.show()
 
 global theta_iter
 theta_iter = []
@@ -61,22 +76,46 @@ def map_features(x: np.array, n_features: int):
     m, n = x.shape
     feature_map = [range(0, n_features + 1)] * n
     poly_features = tuple(itertools.product(*feature_map))
-    poly_x = np.hstack([np.power(x, feature) for feature in poly_features])
+    poly_x = np.hstack([np.prod(np.power(x, feature), axis=1).reshape(m, 1) for feature in poly_features])
     return poly_x
 
 
-with open("train_mv.csv") as f:
-    train = pd.read_csv(f)
-    train = train.to_numpy()
-    test = train
+def regularize(x: np.array) -> (np.array,):
+    """
+    Regularize input array x with mean 0 and standard deviation 1.
+    x: m x n vector
+    """
+    m, n = x.shape
+    mean = np.zeros((1, n))
+    std = np.ones((1, n))
+    for col in range(0, n):
+        mean[0, col] = np.mean(x[:, col])
+        std[0, col] = np.std(x[:, col])
+        x[:, col] = (x[:, col] - mean[0, col]) / std[0, col]
+    return x, mean, std
+
+
+params = [6, 13, 0]
+
+data = data[:, params]
+np.random.shuffle(data)
+test_len = int(np.round(len(data) * 3 / 10))
+train = data[:-test_len]
+test = data[-test_len:]
 
 x = train[:, 0:-1]
-features = 6
+features = 4
+x, mean, std = regularize(x)
 x = map_features(x, features)
 
 m, n = x.shape
 
 y = train[:, -1].reshape((m, 1))
+
+test_x = test[:, 0:-1]
+test_x = (test_x - mean) / std
+test_x = map_features(test_x, features)
+test_y = test[:, -1].reshape((-1, 1))
 
 theta = np.zeros((1, n))
 theta = opt.fmin_tnc(func=cost, x0=theta, args=(x, y))[0]
@@ -86,8 +125,8 @@ theta_iter.append(theta.reshape((1, n)))
 total = 0
 correct = 0
 
-for index, t in enumerate(x):
-    actual = y[index][-1]
+for index, t in enumerate(test_x):
+    actual = test_y[index, 0]
     predicted = sigmoid(t @ theta)
     if np.round(predicted) == actual:
         correct += 1
@@ -100,7 +139,8 @@ print("Test set accuracy:", correct * 100 / total)
 fig, ax = plt.subplots()
 
 
-def decision_boundary(graph_boundaries: np.array, theta: np.array, n_features: int, max_bound: float = 0.3) -> np.array:
+def decision_boundary(boundary_x: np.array, boundary_y: np.array, theta: np.array, n_features: int,
+                      mean: np.array, std: np.array, max_bound: float = 0.1) -> np.array:
     """
     Find the decision boundary for multivariate logistic regression.
     graph_boundaries: array determining the smoothness of the boundary.
@@ -109,16 +149,20 @@ def decision_boundary(graph_boundaries: np.array, theta: np.array, n_features: i
     max_bound: scalar determining the largest loss that is included in the boundary.
     """
     z = []
-    for i in graph_boundaries:
-        for j in graph_boundaries:
-            if 0 <= map_features(np.array([[i, j]]), n_features) @ theta.T <= max_bound:
+    for i in boundary_x:
+        for j in boundary_y:
+            if 0 <= map_features((np.array([[i, j]]) - mean) / std, n_features) @ theta.T:
                 z.append(np.array([i, j]))
     return np.array(z)
 
 
-graph_boundaries = np.linspace(np.amin(test[:, 0:2]), np.amax(test[:, 0:2]), 50)
+boundary_x = np.linspace(np.amin(test[:, 0]), np.amax(test[:, 0]), 50)
+boundary_y = np.linspace(np.amin(test[:, 1]), np.amax(test[:, 1]), 50)
 accepted = np.array([p for p in test if p[2] == 1])
 rejected = np.array([p for p in test if p[2] == 0])
+
+x1 = headers[params[0]]
+x2 = headers[params[1]]
 
 
 def animate(i):
@@ -126,15 +170,15 @@ def animate(i):
     ax.clear()
     ax.scatter(accepted[:, 0], accepted[:, 1], c='dodgerblue')
     ax.scatter(rejected[:, 0], rejected[:, 1], c='firebrick')
-    ax.legend(['Accepted', 'Rejected'], loc=1)
-    p_x = decision_boundary(graph_boundaries, theta_iter[i], features)
+    ax.legend(['Alcohol 1', 'Alcohol 2/3'], loc=0)
+    ax.set_xlabel(x1)
+    ax.set_ylabel(x2)
+    ax.set_title(f'Alcohol Type Based On {x1} And {x2}')
+    p_x = decision_boundary(boundary_x, boundary_y, theta_iter[i], features, mean, std)
     if len(p_x) > 2:
         hull = ConvexHull(p_x)
         for simplex in hull.simplices:
             ax.plot(p_x[simplex, 0], p_x[simplex, 1], 'k-')
-    ax.set_xlabel('Test 1 Results')
-    ax.set_ylabel('Test 2 Results')
-    ax.set_title('Microchip Validation')
 
 
 ani = animation.FuncAnimation(fig, animate, frames=len(theta_iter), interval=75, repeat=False)

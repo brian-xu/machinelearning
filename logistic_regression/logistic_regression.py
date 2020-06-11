@@ -1,12 +1,29 @@
 # import matplotlib; matplotlib.use("TkAgg")  # Uncomment to display animation on PyCharm
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
-from matplotlib import style
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
+import seaborn as sns
 
-style.use('ggplot')
+from import_datasets import download_grades
+
+sns.set()
+
+download_grades()
+
+with open("student-mat.csv") as f:
+    student_grades = pd.read_csv(f, delimiter=';')
+    headers = student_grades.columns
+
+student_grades['G1'] = pd.to_numeric(student_grades['G1'])
+student_grades['G2'] = pd.to_numeric(student_grades['G2'])
+student_grades['G3'] = (student_grades['G3'] > 10).astype(int)
+
+sns.relplot(x='G1', y='G2', hue='G3', data=student_grades)
+plt.show()
+
+data = student_grades.to_numpy()
 
 global theta_iter
 theta_iter = []
@@ -52,10 +69,11 @@ def cost(theta: np.array, x: np.array, y: np.array, reg: float = 0) -> (float, n
     J_reg = theta[1:] ** 2
     J = np.sum(log_error / m) + np.sum(J_reg * reg / (2 * m))
 
-    grad = (h_x - y).T @ x
+    grad = (h_x - y).T @ x / m
     grad_reg = np.append([0], theta[0, 1:] * (reg / m)).reshape(grad.shape)
+    grad = grad + grad_reg
 
-    return J, grad + grad_reg
+    return J, grad
 
 
 def predict(theta: np.array, x: np.array) -> np.array:
@@ -69,10 +87,13 @@ def predict(theta: np.array, x: np.array) -> np.array:
     return np.round(sigmoid(x @ theta.T))
 
 
-with open("train.csv") as f:
-    train = pd.read_csv(f)
-    train = train.to_numpy()
-    test = train
+params = [-3, -2, -1]
+
+data = data[:, params].astype('float64')
+np.random.shuffle(data)
+test_len = int(np.round(len(data) * 3 / 10))
+train = data[:-test_len]
+test = data[-test_len:]
 
 m, n = train.shape
 
@@ -108,22 +129,25 @@ def decision_boundary(x: np.array, theta: np.array) -> np.array:
     return -(theta[0] + theta[1] * x) / theta[2]
 
 
-reg_x = np.arange(int(min(test[:, 0])), 100)
-accepted = np.array([p for p in test if p[2] == 1])
-rejected = np.array([p for p in test if p[2] == 0])
+reg_x = np.arange(int(min(test[:, 0])), 20)
+passing = np.array([p for p in test if p[2] == 1])
+not_passing = np.array([p for p in test if p[2] == 0])
+
+x1 = headers[params[0]]
+x2 = headers[params[1]]
 
 
 def animate(i):
     global theta_iter
     ax.clear()
-    ax.scatter(accepted[:, 0], accepted[:, 1], c='blue')
-    ax.scatter(rejected[:, 0], rejected[:, 1], c='red')
+    ax.scatter(passing[:, 0], passing[:, 1], c='blue')
+    ax.scatter(not_passing[:, 0], not_passing[:, 1], c='red')
     p_x = decision_boundary(reg_x, theta_iter[i])
     ax.plot(reg_x, p_x, 'black')
-    ax.legend([f'Cost: {cost(theta_iter[i], x, y)[0]}', 'Accepted', 'Rejected'], loc=3)
-    ax.set_xlabel('Exam 1 Score')
-    ax.set_ylabel('Exam 2 Score')
-    ax.set_title('Accepted to College')
+    ax.legend([f'Cost: {cost(theta_iter[i], x, y)[0]}', 'Passed', 'Failed'], loc=3)
+    ax.set_xlabel(x1)
+    ax.set_ylabel(x2)
+    ax.set_title('G3 Passing Status')
 
 
 ani = animation.FuncAnimation(fig, animate, frames=len(theta_iter), interval=40, repeat=False)
