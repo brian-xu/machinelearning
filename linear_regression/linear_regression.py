@@ -3,9 +3,26 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import style
+import seaborn as sns
 
-style.use('ggplot')
+from import_datasets import download_mpg
+
+sns.set()
+
+download_mpg()
+
+with open("auto-mpg.data") as f:
+    auto_mpg = pd.read_csv(f, delim_whitespace=True)
+    headers = auto_mpg.columns
+
+auto_mpg = auto_mpg.replace('?', np.nan)
+auto_mpg['Horsepower'] = pd.to_numeric(auto_mpg['Horsepower'])
+auto_mpg['Horsepower'].fillna(auto_mpg['Horsepower'].mean())
+
+data = auto_mpg.to_numpy()
+
+sns.pairplot(auto_mpg)
+plt.show()
 
 
 def add_ones(x: np.array) -> np.array:
@@ -86,18 +103,13 @@ def predict(theta: np.array, x: np.array) -> np.array:
     return x @ theta.T
 
 
-params = [5, 3]
+params = [4, 0]
 
-with open("weatherHistory.csv") as f:
-    data = pd.read_csv(f)
-    headers = data.columns
-    data = data.to_numpy()
-    data = data[:, params]
-    np.random.shuffle(data)
-    data = data[int(np.round(len(data) * 95 / 100)):, :]
-    test_len = int(np.round(len(data) * 3 / 10))
-    train = data[:-test_len]
-    test = data[-test_len:]
+data = data[:, params]
+np.random.shuffle(data)
+test_len = int(np.round(len(data) * 3 / 10))
+train = data[:-test_len]
+test = data[-test_len:]
 
 m, n = train.shape
 
@@ -121,8 +133,6 @@ total = np.sum((test_y - np.mean(test_y)) ** 2)
 print(f"R-squared for test set: {1 - (residual / total)}")
 
 # Below code is not vectorized but it's just visualization code
-
-plt.rcParams["axes.titlesize"] = 13
 
 fig, ax = plt.subplots()
 
