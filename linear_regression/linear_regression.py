@@ -21,7 +21,7 @@ auto_mpg['Horsepower'].fillna(auto_mpg['Horsepower'].mean())
 
 data = auto_mpg.to_numpy()
 
-sns.pairplot(auto_mpg)
+sns.pairplot(auto_mpg, x_vars=headers[1:-1], y_vars=headers[0])
 plt.show()
 
 
@@ -116,8 +116,6 @@ m, n = train.shape
 x = add_ones(train[:, 0:n - 1])
 y = train[:, n - 1].reshape((m, 1))
 
-mean = np.zeros((1, n))
-std = np.ones((1, n))
 x, mean, std = regularize(x)
 
 theta = np.zeros((1, n))
@@ -136,9 +134,7 @@ print(f"R-squared for test set: {1 - (residual / total)}")
 
 fig, ax = plt.subplots()
 
-x_vals = np.linspace(0, int(np.max(test_x[:, -1:]))).reshape((50, 1))
-
-ax.set(ylim=(0, np.ceil(np.max(test[:, 1]) / 10) * 10))
+x_vals = np.linspace(int(np.min(test_x[:, 1:])), int(np.max(test_x[:, 1:]))).reshape((50, 1))
 
 independent = headers[params[0]]
 dependent = headers[params[1]]
@@ -146,11 +142,11 @@ dependent = headers[params[1]]
 
 def animate(i):
     ax.clear()
-    ax.scatter(test[:, 0], test[:, 1])
+    ax.set_ylim(bottom=0, top=np.ceil(np.max(test[:, 1]) / 10) * 10)
+    sns.scatterplot(test[:, 0], test[:, 1])
     p_x = predict(theta_iter[i], (add_ones(x_vals) - mean) / std)
-    regression_line, = ax.plot(x_vals, p_x, 'black')
-    regression_line.set_label(f'Cost: {J_iter[i]}')
-    ax.legend()
+    sns.lineplot(x_vals[:, 0], p_x[:, 0], color='black')
+    ax.legend([f'Cost: {J_iter[i]}'])
     ax.set_xlabel(independent)
     ax.set_ylabel(dependent)
     ax.set_title(f'{dependent} vs {independent}')

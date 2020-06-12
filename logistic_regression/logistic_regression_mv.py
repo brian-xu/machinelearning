@@ -158,8 +158,6 @@ def decision_boundary(boundary_x: np.array, boundary_y: np.array, theta: np.arra
 
 boundary_x = np.linspace(np.amin(test[:, 0]), np.amax(test[:, 0]), 50)
 boundary_y = np.linspace(np.amin(test[:, 1]), np.amax(test[:, 1]), 50)
-accepted = np.array([p for p in test if p[2] == 1])
-rejected = np.array([p for p in test if p[2] == 0])
 
 x1 = headers[params[0]]
 x2 = headers[params[1]]
@@ -168,9 +166,8 @@ x2 = headers[params[1]]
 def animate(i):
     global theta_iter
     ax.clear()
-    ax.scatter(accepted[:, 0], accepted[:, 1], c='dodgerblue')
-    ax.scatter(rejected[:, 0], rejected[:, 1], c='firebrick')
-    ax.legend(['Alcohol 1', 'Alcohol 2/3'], loc=0)
+    sns.scatterplot(test[:, 0], test[:, 1], hue=test[:, 2])
+    ax.legend(['Alcohol 1', 'Alcohol 2/3'], loc='upper left')
     ax.set_xlabel(x1)
     ax.set_ylabel(x2)
     ax.set_title(f'Alcohol Type Based On {x1} And {x2}')

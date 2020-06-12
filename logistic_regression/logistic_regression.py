@@ -130,8 +130,6 @@ def decision_boundary(x: np.array, theta: np.array) -> np.array:
 
 
 reg_x = np.arange(int(min(test[:, 0])), 20)
-passing = np.array([p for p in test if p[2] == 1])
-not_passing = np.array([p for p in test if p[2] == 0])
 
 x1 = headers[params[0]]
 x2 = headers[params[1]]
@@ -140,11 +138,10 @@ x2 = headers[params[1]]
 def animate(i):
     global theta_iter
     ax.clear()
-    ax.scatter(passing[:, 0], passing[:, 1], c='blue')
-    ax.scatter(not_passing[:, 0], not_passing[:, 1], c='red')
     p_x = decision_boundary(reg_x, theta_iter[i])
-    ax.plot(reg_x, p_x, 'black')
-    ax.legend([f'Cost: {cost(theta_iter[i], x, y)[0]}', 'Passed', 'Failed'], loc=3)
+    sns.lineplot(reg_x, p_x, color='black', legend=False)
+    sns.scatterplot(test[:, 0], test[:, 1], hue=test[:, 2])
+    ax.legend([f'Cost: {cost(theta_iter[i], x, y)[0]}', 'Passed', 'Failed'], loc='upper left')
     ax.set_xlabel(x1)
     ax.set_ylabel(x2)
     ax.set_title('G3 Passing Status')
